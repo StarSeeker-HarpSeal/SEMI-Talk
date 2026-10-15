@@ -77,7 +77,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
       <label>상대 언어<select id="partner"></select></label>
       <div><label>상대에게 하는 말투</label>
         <div class="seg" id="formality"><button type="button" data-v="more">존댓말</button><button type="button" data-v="less">반말</button></div></div>
-      <label>목소리 높이 <span id="pitchV">1.1</span><input id="pitch" type="range" min="0.6" max="1.8" step="0.1" value="1.1"></label>
+      <label>🐻 곰돌이 목소리 높이 <span id="pitchMeV">0.7</span><input id="pitchMe" type="range" min="0.3" max="1.8" step="0.1" value="0.7"></label>
+      <label><span id="pitchYouL">상대 목소리 높이</span> <span id="pitchYouV">1.1</span><input id="pitchYou" type="range" min="0.3" max="1.8" step="0.1" value="1.1"></label>
     </div>
   </details>
 
@@ -156,7 +157,15 @@ sel.value = store.get('semitalk_partner', 'ja');
 $('pass').value = store.get('semitalk_pass', '');
 let formality = store.get('semitalk_formality', 'more');
 let gender = store.get('semitalk_gender', 'f');
-const pitch = $('pitch'); pitch.value = store.get('semitalk_pitch', '1.1'); $('pitchV').textContent = pitch.value;
+// 목소리 높이: 곰돌이 하나, 상대는 여/남 따로 기억
+const PITCH_DEFAULT = { me: '0.7', f: '1.1', m: '0.8' };
+const pitchMe = $('pitchMe'), pitchYou = $('pitchYou');
+pitchMe.value = store.get('semitalk_pitch_me', PITCH_DEFAULT.me); $('pitchMeV').textContent = pitchMe.value;
+function loadPitchYou() {
+  pitchYou.value = store.get('semitalk_pitch_' + gender, PITCH_DEFAULT[gender]);
+  $('pitchYouV').textContent = pitchYou.value;
+  $('pitchYouL').textContent = (gender === 'f' ? '👩' : '👨') + ' 상대 목소리 높이';
+}
 function paintSeg(id, v) { [...$(id).children].forEach(b => b.classList.toggle('on', b.dataset.v === v)); }
 function paintGender() {
   paintSeg('gender', gender);
@@ -164,13 +173,14 @@ function paintGender() {
   $('hairM').style.display = gender === 'm' ? '' : 'none';
   $('shirt').setAttribute('fill', gender === 'f' ? 'var(--shirt-f)' : 'var(--shirt-m)');
 }
-paintSeg('formality', formality); paintGender();
+paintSeg('formality', formality); paintGender(); loadPitchYou();
 if (!$('pass').value) $('setup').open = true;
 sel.onchange = () => { store.set('semitalk_partner', sel.value); updateLabels(); };
 $('pass').onchange = () => store.set('semitalk_pass', $('pass').value);
 $('formality').onclick = e => { const v = e.target.dataset.v; if (v) { formality = v; store.set('semitalk_formality', v); paintSeg('formality', v); } };
-$('gender').onclick = e => { const v = e.target.dataset.v; if (v) { gender = v; store.set('semitalk_gender', v); paintGender(); } };
-pitch.oninput = () => { $('pitchV').textContent = pitch.value; store.set('semitalk_pitch', pitch.value); };
+$('gender').onclick = e => { const v = e.target.dataset.v; if (v) { gender = v; store.set('semitalk_gender', v); paintGender(); loadPitchYou(); } };
+pitchMe.oninput = () => { $('pitchMeV').textContent = pitchMe.value; store.set('semitalk_pitch_me', pitchMe.value); };
+pitchYou.oninput = () => { $('pitchYouV').textContent = pitchYou.value; store.set('semitalk_pitch_' + gender, pitchYou.value); };
 function updateLabels() { $('btnYou').textContent = '상대 말하기 (' + LANGS[sel.value].name + ')'; }
 updateLabels();
 
@@ -198,7 +208,7 @@ function speak(text, lang, who) {
     u.lang = LANGS[lang].sr;
     const v = voices.find(x => x.lang.toLowerCase().replace('_', '-').startsWith(LANGS[lang].tts));
     if (v) u.voice = v;
-    u.pitch = Number(pitch.value);
+    u.pitch = Number(who === 'me' ? pitchMe.value : pitchYou.value);
     u.onstart = () => setState(who, 'talking');
     u.onend = () => setState(who, 'idle');
     u.onerror = e => { setState(who, 'idle'); if (e.error !== 'interrupted' && e.error !== 'canceled') $('err').textContent = '읽기 오류: ' + e.error; };
