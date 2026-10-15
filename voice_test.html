@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SEMI-Talk 음성 테스트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+/* 레이아웃: 폰 한 손 세로 스크롤, 상태표 → 듣기 → 말하기 순서 */
+:root {
+  --bg: #eef4f7; --card: #ffffff; --fg: #23323a; --muted: #6a7d86;
+  --accent: #3d8fb5; --accent-soft: #d6eaf3; --ok: #2f8a5b; --bad: #c2453d; --line: #d7e2e7;
+  --display: "Jua", "Gowun Dodum", system-ui, sans-serif;
+  --body: "Gowun Dodum", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #142027; --card: #1c2b33; --fg: #e3edf1; --muted: #93a8b1;
+  --accent: #6fb8da; --accent-soft: #23404e; --ok: #6cc996; --bad: #ec7d74; --line: #2c3f48; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #142027; --card: #1c2b33; --fg: #e3edf1; --muted: #93a8b1;
+  --accent: #6fb8da; --accent-soft: #23404e; --ok: #6cc996; --bad: #ec7d74; --line: #2c3f48; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
+main { max-width: 480px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 1.9rem; margin: 0; text-wrap: balance; }
+h1 span { color: var(--accent); }
+h2 { font-family: var(--display); font-weight: 400; font-size: 1.25rem; margin: 0; }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: .95rem; }
+section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+.status { display: grid; gap: 6px; font-size: .92rem; }
+.row { display: flex; justify-content: space-between; gap: 12px; }
+.row b { font-weight: 400; color: var(--muted); }
+.ok { color: var(--ok); } .bad { color: var(--bad); }
+.btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+button { font-family: var(--display); font-size: 1.1rem; padding: 14px 10px; border-radius: 12px; border: 2px solid var(--accent);
+  background: var(--accent-soft); color: var(--fg); cursor: pointer; }
+button.on { background: var(--accent); color: var(--card); }
+button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.out { min-height: 3.2em; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px dashed var(--line); word-break: break-word; }
+.out small { color: var(--muted); display: block; }
+textarea { width: 100%; box-sizing: border-box; font-family: var(--body); font-size: 1rem; padding: 10px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg); resize: vertical; }
+select { width: 100%; font-family: var(--body); font-size: .95rem; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+label { font-size: .9rem; color: var(--muted); display: grid; gap: 4px; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.val { font-variant-numeric: tabular-nums; color: var(--fg); }
+.err { color: var(--bad); font-size: .9rem; min-height: 1.2em; }
+</style>
+</head>
+<body>
+
+<main>
+  <header>
+    <h1>SEMI-Talk <span>음성 테스트</span></h1>
+    <p class="sub">이 폰에서 듣기·말하기가 되는지만 확인하는 1단계 페이지예요. 번역·캐릭터는 아직 없어요.</p>
+  </header>
+
+  <section>
+    <h2>지원 상태</h2>
+    <div class="status">
+      <div class="row"><b>음성 인식</b><span id="stSR">확인 중…</span></div>
+      <div class="row"><b>음성 읽기</b><span id="stTTS">확인 중…</span></div>
+      <div class="row"><b>일본어 목소리</b><span id="stJa">확인 중…</span></div>
+      <div class="row"><b>한국어 목소리</b><span id="stKo">확인 중…</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>🎤 말하기 → 글자</h2>
+    <div class="btns">
+      <button id="micKo" type="button">한국어로 말하기</button>
+      <button id="micJa" type="button">일본어로 말하기</button>
+    </div>
+    <div class="out" id="heard"><small>버튼을 누르고 말해보세요.</small></div>
+    <div class="err" id="micErr"></div>
+  </section>
+
+  <section>
+    <h2>🔊 글자 → 목소리</h2>
+    <label>일본어 문장<textarea id="txtJa" rows="2">大丈夫だよ！ぜんぜん平気！</textarea></label>
+    <label>일본어 목소리<select id="voiceJa"></select></label>
+    <label>한국어 문장<textarea id="txtKo" rows="2">괜찮아요, 걱정 마세요!</textarea></label>
+    <label>한국어 목소리<select id="voiceKo"></select></label>
+    <label>피치 (높을수록 귀여움) <span class="val" id="pitchV">1.6</span><input id="pitch" type="range" min="0.5" max="2" step="0.1" value="1.6"></label>
+    <label>속도 <span class="val" id="rateV">1.0</span><input id="rate" type="range" min="0.5" max="1.5" step="0.1" value="1.0"></label>
+    <div class="btns">
+      <button id="sayJa" type="button">일본어 읽기</button>
+      <button id="sayKo" type="button">한국어 읽기</button>
+    </div>
+    <div class="err" id="ttsErr"></div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const tts = window.speechSynthesis;
+const mark = (el, good, text) => { el.textContent = text; el.className = good ? 'ok' : 'bad'; };
+
+mark($('stSR'), !!SR, SR ? '지원됨' : '지원 안 됨');
+mark($('stTTS'), !!tts, tts ? '지원됨' : '지원 안 됨');
+
+let voices = [];
+function loadVoices() {
+  if (!tts) return;
+  voices = tts.getVoices();
+  fill('ja', $('voiceJa'), $('stJa'));
+  fill('ko', $('voiceKo'), $('stKo'));
+}
+function fill(lang, sel, st) {
+  const list = voices.filter(v => v.lang.toLowerCase().startsWith(lang));
+  const prev = sel.value;
+  sel.innerHTML = '';
+  list.forEach((v, i) => { const o = document.createElement('option'); o.value = v.name; o.textContent = v.name + ' (' + v.lang + ')'; sel.appendChild(o); });
+  if (!list.length) { const o = document.createElement('option'); o.value = ''; o.textContent = '기본 목소리 사용'; sel.appendChild(o); }
+  if (prev && list.some(v => v.name === prev)) sel.value = prev;
+  mark(st, list.length > 0, list.length ? list.length + '개 있음' : '없음 (설정에서 음성 데이터 설치 필요)');
+}
+if (tts) { loadVoices(); tts.onvoiceschanged = loadVoices; setTimeout(loadVoices, 800); }
+else { mark($('stJa'), false, '-'); mark($('stKo'), false, '-'); }
+
+const MIC_ERR = {
+  'not-allowed': '마이크 권한이 막혀 있어요. 이 페이지가 올라간 곳에서 마이크를 허용하지 않거나, 크롬 설정에서 마이크를 꺼둔 상태예요.',
+  'service-not-allowed': '이 환경에서는 음성 인식 서비스를 쓸 수 없어요.',
+  'no-speech': '말소리를 못 들었어요. 조금 더 크게 다시 해보세요.',
+  'network': '인터넷 연결 문제로 인식에 실패했어요.',
+  'audio-capture': '마이크를 찾지 못했어요.',
+  'language-not-supported': '이 언어는 이 폰에서 인식이 지원되지 않아요.'
+};
+let rec = null, activeBtn = null;
+function listen(lang, btn) {
+  $('micErr').textContent = '';
+  if (!SR) { $('micErr').textContent = '이 브라우저는 음성 인식을 지원하지 않아요. 크롬으로 열어보세요.'; return; }
+  if (rec) { rec.stop(); return; }
+  rec = new SR();
+  rec.lang = lang; rec.interimResults = true; rec.continuous = false;
+  activeBtn = btn; btn.classList.add('on'); btn.dataset.label = btn.textContent; btn.textContent = '듣는 중… (누르면 멈춤)';
+  rec.onresult = e => {
+    let text = '';
+    for (const r of e.results) text += r[0].transcript;
+    const final = e.results[e.results.length - 1].isFinal;
+    $('heard').innerHTML = '';
+    const s = document.createElement('small'); s.textContent = (lang === 'ko-KR' ? '한국어' : '일본어') + (final ? ' · 인식 완료' : ' · 인식 중');
+    $('heard').append(s, document.createTextNode(text));
+  };
+  rec.onerror = e => { $('micErr').textContent = MIC_ERR[e.error] || ('인식 오류: ' + e.error); };
+  rec.onend = () => { if (activeBtn) { activeBtn.classList.remove('on'); activeBtn.textContent = activeBtn.dataset.label; } rec = null; activeBtn = null; };
+  try { rec.start(); } catch (err) { $('micErr').textContent = '인식을 시작하지 못했어요: ' + err.message; rec.onend(); }
+}
+$('micKo').onclick = () => listen('ko-KR', $('micKo'));
+$('micJa').onclick = () => listen('ja-JP', $('micJa'));
+
+$('pitch').oninput = () => $('pitchV').textContent = Number($('pitch').value).toFixed(1);
+$('rate').oninput = () => $('rateV').textContent = Number($('rate').value).toFixed(1);
+
+function say(text, lang, sel) {
+  $('ttsErr').textContent = '';
+  if (!tts) { $('ttsErr').textContent = '이 브라우저는 음성 읽기를 지원하지 않아요.'; return; }
+  tts.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  const v = voices.find(x => x.name === sel.value);
+  if (v) u.voice = v;
+  u.pitch = Number($('pitch').value);
+  u.rate = Number($('rate').value);
+  u.onerror = e => { $('ttsErr').textContent = '읽기 오류: ' + e.error; };
+  tts.speak(u);
+}
+$('sayJa').onclick = () => say($('txtJa').value, 'ja-JP', $('voiceJa'));
+$('sayKo').onclick = () => say($('txtKo').value, 'ko-KR', $('voiceKo'));
+</script>
+</body>
+</html>
