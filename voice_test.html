@@ -157,15 +157,19 @@ $('rate').oninput = () => $('rateV').textContent = Number($('rate').value).toFix
 function say(text, lang, sel) {
   $('ttsErr').textContent = '';
   if (!tts) { $('ttsErr').textContent = '이 브라우저는 음성 읽기를 지원하지 않아요.'; return; }
-  tts.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang;
-  const v = voices.find(x => x.name === sel.value);
-  if (v) u.voice = v;
-  u.pitch = Number($('pitch').value);
-  u.rate = Number($('rate').value);
-  u.onerror = e => { $('ttsErr').textContent = '읽기 오류: ' + e.error; };
-  tts.speak(u);
+  // 안드로이드 크롬: cancel 직후 바로 speak 하면 새 문장까지 끊기는 문제가 있어 0.3초 띄움
+  const go = () => {
+    tts.resume();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    const v = voices.find(x => x.name === sel.value);
+    if (v) u.voice = v;
+    u.pitch = Number($('pitch').value);
+    u.rate = Number($('rate').value);
+    u.onerror = e => { if (e.error !== 'interrupted' && e.error !== 'canceled') $('ttsErr').textContent = '읽기 오류: ' + e.error; };
+    tts.speak(u);
+  };
+  if (tts.speaking || tts.pending) { tts.cancel(); setTimeout(go, 300); } else go();
 }
 $('sayJa').onclick = () => say($('txtJa').value, 'ja-JP', $('voiceJa'));
 $('sayKo').onclick = () => say($('txtKo').value, 'ko-KR', $('voiceKo'));

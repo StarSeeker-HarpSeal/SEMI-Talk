@@ -118,15 +118,26 @@ const tts = window.speechSynthesis;
 let voices = [];
 function loadVoices() { if (tts) voices = tts.getVoices(); }
 if (tts) { loadVoices(); tts.onvoiceschanged = loadVoices; }
+// 안드로이드 크롬: cancel 직후 바로 speak 하면 새 문장까지 끊기는(interrupted) 문제가 있어 0.3초 띄움
+let ttsUnlocked = false;
+function unlockTTS() {
+  if (!tts || ttsUnlocked) return;
+  const u = new SpeechSynthesisUtterance(' '); u.volume = 0;
+  tts.speak(u); ttsUnlocked = true;
+}
 function speak(text, lang) {
   if (!tts) return;
-  tts.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = LANGS[lang].sr;
-  const v = voices.find(x => x.lang.toLowerCase().startsWith(LANGS[lang].tts));
-  if (v) u.voice = v;
-  u.pitch = Number(pitch.value);
-  tts.speak(u);
+  const go = () => {
+    tts.resume();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = LANGS[lang].sr;
+    const v = voices.find(x => x.lang.toLowerCase().replace('_', '-').startsWith(LANGS[lang].tts));
+    if (v) u.voice = v;
+    u.pitch = Number(pitch.value);
+    u.onerror = e => { if (e.error !== 'interrupted' && e.error !== 'canceled') $('err').textContent = '읽기 오류: ' + e.error; };
+    tts.speak(u);
+  };
+  if (tts.speaking || tts.pending) { tts.cancel(); setTimeout(go, 300); } else go();
 }
 
 // 번역
@@ -157,7 +168,7 @@ function addBubble(who, orig, tr, lang) {
   const o = document.createElement('div'); o.className = 'orig'; o.textContent = orig;
   const t = document.createElement('div'); t.className = 'tr'; t.textContent = tr;
   const again = document.createElement('button'); again.type = 'button'; again.textContent = '🔊 다시 듣기';
-  again.onclick = () => speak(tr, lang);
+  again.onclick = () => { unlockTTS(); speak(tr, lang); };
   b.append(o, t, again); log.append(b);
   b.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
@@ -195,8 +206,8 @@ function run(who) {
   };
   rec.start();
 }
-$('btnMe').onclick = () => run('me');
-$('btnYou').onclick = () => run('you');
+$('btnMe').onclick = () => { unlockTTS(); run('me'); };
+$('btnYou').onclick = () => { unlockTTS(); run('you'); };
 </script>
 </body>
 </html>
