@@ -6,78 +6,131 @@
 <title>SEMI-Talk</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
 <style>
-/* 레이아웃: 폰 세로 한 화면, 설정 → 대화 기록 → 아래 큰 버튼 두 개 */
+/* 레이아웃: 위 = 상대 캐릭터, 가운데 = 대화 기록, 아래 = 곰돌이(나), 맨 아래 = 큰 버튼 */
 :root {
-  --bg: #eef4f7; --card: #ffffff; --fg: #23323a; --muted: #6a7d86;
-  --me: #3d8fb5; --me-soft: #d6eaf3; --you: #c4728a; --you-soft: #f6e1e7; --bad: #c2453d; --line: #d7e2e7;
-  --display: "Jua", "Gowun Dodum", system-ui, sans-serif;
-  --body: "Gowun Dodum", system-ui, sans-serif;
+  --bg: #f6f4f1; --card: #ffffff; --fg: #23323a; --muted: #6a7d86; --line: #e2dfda; --bad: #c2453d;
+  --ink: #0d2a5c; --blush: #f2577c; --bear: #e6c7a1; --shirt-f: #ffd0dc; --shirt-m: #cfe2f7;
+  --me-soft: #f3e6d6; --you-soft: #e3edf8;
+  --display: "Jua", "Gowun Dodum", system-ui, sans-serif; --body: "Gowun Dodum", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #142027; --card: #1c2b33; --fg: #e3edf1; --muted: #93a8b1; --me: #6fb8da; --me-soft: #23404e;
-  --you: #e29bb0; --you-soft: #48293a; --bad: #ec7d74; --line: #2c3f48; color-scheme: dark } }
+  --bg: #141c26; --card: #1d2833; --fg: #e6edf1; --muted: #9fb0b8; --line: #2b3946; --bad: #ec7d74;
+  --me-soft: #3a3024; --you-soft: #22324a; color-scheme: dark } }
 body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5; margin: 0;
   padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px));
-  padding-block: 16px calc(150px + env(safe-area-inset-bottom, 0px)); }
-main { max-width: 520px; margin: 0 auto; display: grid; gap: 12px; }
-h1 { font-family: var(--display); font-weight: 400; font-size: 1.6rem; margin: 0; }
-h1 span { color: var(--me); }
-section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
+  padding-block: 12px calc(120px + env(safe-area-inset-bottom, 0px)); }
+main { max-width: 520px; margin: 0 auto; display: grid; gap: 10px; }
+header { display: flex; justify-content: space-between; align-items: center; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 1.4rem; margin: 0; }
+details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; }
+details summary { cursor: pointer; color: var(--muted); }
+.setup { display: grid; gap: 10px; margin-top: 10px; }
 label { font-size: .9rem; color: var(--muted); display: grid; gap: 4px; }
 input, select { font-family: var(--body); font-size: 1rem; padding: 9px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
-.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .seg { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
 .seg button { flex: 1; border: 0; padding: 9px; font-family: var(--body); font-size: .95rem; background: var(--bg); color: var(--muted); }
-.seg button.on { background: var(--me); color: var(--card); }
-#log { display: grid; gap: 10px; }
-.bubble { padding: 10px 12px; border-radius: 12px; max-width: 88%; word-break: break-word; }
-.bubble.me { background: var(--me-soft); justify-self: end; }
-.bubble.you { background: var(--you-soft); justify-self: start; }
-.bubble .orig { font-size: .85rem; color: var(--muted); }
-.bubble .tr { font-size: 1.1rem; margin-top: 2px; }
-.bubble button { margin-top: 4px; border: 0; background: none; color: var(--muted); font-size: .85rem; padding: 0; }
-.empty { color: var(--muted); text-align: center; padding: 18px 0; }
+.seg button.on { background: var(--ink); color: #fff; }
+.stage { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 8px; }
+.stage.me { grid-template-columns: 1fr 110px; }
+.stage svg { width: 110px; height: auto; overflow: visible; }
+.say { background: var(--card); border: 2px solid var(--ink); border-radius: 18px; padding: 10px 14px; min-height: 3.2em; font-size: 1.15rem; word-break: break-word; }
+.say small { display: block; font-size: .8rem; color: var(--muted); }
+.say.empty { color: var(--muted); font-size: .95rem; }
+#log { display: grid; gap: 6px; max-height: 28vh; overflow-y: auto; padding: 2px; }
+.line { font-size: .88rem; padding: 6px 10px; border-radius: 10px; max-width: 88%; }
+.line.me { background: var(--me-soft); justify-self: end; }
+.line.you { background: var(--you-soft); justify-self: start; }
+.line button { border: 0; background: none; color: var(--muted); font-size: .8rem; padding: 0 0 0 6px; }
 .err { color: var(--bad); font-size: .9rem; min-height: 1.2em; text-align: center; }
 .dock { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
-  padding: 12px max(14px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); }
+  padding: 10px max(14px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); }
 .dock .inner { max-width: 520px; margin: 0 auto; display: grid; gap: 6px; }
-.big { font-family: var(--display); font-size: 1.15rem; padding: 16px 8px; border-radius: 14px; border: 2px solid; }
-.big.me { border-color: var(--me); background: var(--me-soft); color: var(--fg); }
-.big.you { border-color: var(--you); background: var(--you-soft); color: var(--fg); }
-.big.on { filter: brightness(.9); outline: 3px solid var(--fg); }
+.dock .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.big { font-family: var(--display); font-size: 1.1rem; padding: 15px 8px; border-radius: 14px; border: 2px solid var(--ink); color: var(--ink); }
+.big.me { background: #f7ead9; } .big.you { background: #e3edf8; }
+.big.on { outline: 3px solid var(--blush); }
 #status { text-align: center; font-size: .9rem; color: var(--muted); min-height: 1.3em; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--me); outline-offset: 2px; }
-details summary { cursor: pointer; color: var(--muted); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--blush); outline-offset: 2px; }
+/* 캐릭터 상태 */
+.mouth-open { display: none; }
+.talking .mouth-open { display: inline; animation: flap .28s steps(1) infinite; }
+.talking .mouth-closed { animation: flap .28s steps(1) infinite reverse; }
+@keyframes flap { 0% { opacity: 1 } 50% { opacity: 0 } }
+.char { transform-origin: 100px 170px; transition: transform .25s ease; }
+.listening .char { transform: rotate(-7deg); }
+.ear-dot { opacity: 0; }
+.listening .ear-dot { opacity: 1; animation: blink 1s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .2 } }
+@media (prefers-reduced-motion: reduce) { .talking .mouth-open, .talking .mouth-closed, .listening .ear-dot { animation: none; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>SEMI-Talk <span>🦭</span></h1>
+  <header><h1>SEMI-Talk</h1></header>
 
-  <section>
-    <details id="setup">
-      <summary>⚙ 설정</summary>
-      <div style="display:grid;gap:10px;margin-top:10px">
-        <label>SEMI-Talk 비밀번호 (이 폰에만 저장돼요)<input id="pass" type="password" autocomplete="off"></label>
-        <label>상대 언어<select id="partner"></select></label>
-        <div><label>상대에게 하는 말투</label>
-          <div class="seg" id="formality"><button type="button" data-v="more" class="on">존댓말</button><button type="button" data-v="less">반말</button></div>
-        </div>
-        <label>목소리 높이 <span id="pitchV">1.1</span><input id="pitch" type="range" min="0.6" max="1.8" step="0.1" value="1.1"></label>
-      </div>
-    </details>
-  </section>
+  <details id="setup">
+    <summary>⚙ 설정</summary>
+    <div class="setup">
+      <label>SEMI-Talk 비밀번호 (이 폰에만 저장돼요)<input id="pass" type="password" autocomplete="off"></label>
+      <div><label>상대 캐릭터</label>
+        <div class="seg" id="gender"><button type="button" data-v="f">👩 여자</button><button type="button" data-v="m">👨 남자</button></div></div>
+      <label>상대 언어<select id="partner"></select></label>
+      <div><label>상대에게 하는 말투</label>
+        <div class="seg" id="formality"><button type="button" data-v="more">존댓말</button><button type="button" data-v="less">반말</button></div></div>
+      <label>목소리 높이 <span id="pitchV">1.1</span><input id="pitch" type="range" min="0.6" max="1.8" step="0.1" value="1.1"></label>
+    </div>
+  </details>
 
-  <section>
-    <div id="log"><div class="empty">아래 버튼을 누르고 말해보세요.</div></div>
-  </section>
+  <div class="stage you" id="stageYou">
+    <svg viewBox="0 0 200 200" aria-label="상대 캐릭터">
+      <g class="char" stroke="var(--ink)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+        <path id="shirt" d="M70 130 Q100 122 130 130 L140 172 Q100 182 60 172 Z" fill="var(--shirt-f)"/>
+        <circle cx="100" cy="82" r="52" fill="#fff"/>
+        <path id="hairF" d="M46 82 A54 54 0 0 1 154 82 L154 120 Q147 124 143 114 L141 88 C128 66 72 66 59 88 L57 114 Q53 124 46 120 Z" fill="var(--ink)"/>
+        <path id="hairM" d="M45 84 A55 55 0 0 1 155 84 C143 70 130 64 117 68 C104 58 84 60 72 70 C64 72 56 75 45 84 Z" fill="var(--ink)"/>
+        <circle cx="84" cy="94" r="5.5" fill="var(--ink)" stroke="none"/>
+        <circle cx="116" cy="94" r="5.5" fill="var(--ink)" stroke="none"/>
+        <circle cx="72" cy="108" r="7" fill="var(--blush)" stroke="none"/>
+        <circle cx="128" cy="108" r="7" fill="var(--blush)" stroke="none"/>
+        <path class="mouth-closed" d="M93 108 Q100 115 107 108" fill="none" stroke-width="4"/>
+        <ellipse class="mouth-open" cx="100" cy="112" rx="6" ry="5.5" fill="var(--blush)" stroke-width="4"/>
+        <circle class="ear-dot" cx="156" cy="62" r="6" fill="var(--blush)" stroke="none"/>
+      </g>
+    </svg>
+    <div class="say empty" id="sayYou">상대가 말하면 여기에 한국어로 나와요</div>
+  </div>
+
+  <div id="log"></div>
+
+  <div class="stage me" id="stageMe">
+    <div class="say empty" id="sayMe">제가 말하면 여기에 번역돼서 나와요</div>
+    <svg viewBox="0 0 200 200" aria-label="곰돌이 캐릭터">
+      <g class="char" stroke="var(--ink)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="100" cy="152" rx="44" ry="28" fill="var(--bear)"/>
+        <circle cx="58" cy="46" r="18" fill="var(--bear)"/>
+        <circle cx="142" cy="46" r="18" fill="var(--bear)"/>
+        <circle cx="58" cy="46" r="7" fill="var(--blush)" stroke="none" opacity=".55"/>
+        <circle cx="142" cy="46" r="7" fill="var(--blush)" stroke="none" opacity=".55"/>
+        <circle cx="100" cy="88" r="52" fill="var(--bear)"/>
+        <ellipse cx="100" cy="106" rx="22" ry="16" fill="#fff"/>
+        <circle cx="80" cy="84" r="6" fill="var(--ink)" stroke="none"/>
+        <circle cx="120" cy="84" r="6" fill="var(--ink)" stroke="none"/>
+        <circle cx="66" cy="102" r="8" fill="var(--blush)" stroke="none"/>
+        <circle cx="134" cy="102" r="8" fill="var(--blush)" stroke="none"/>
+        <ellipse cx="100" cy="99" rx="6" ry="4.5" fill="var(--ink)" stroke="none"/>
+        <path class="mouth-closed" d="M91 106 Q95.5 113 100 106 Q104.5 113 109 106" fill="none" stroke-width="4"/>
+        <ellipse class="mouth-open" cx="100" cy="111" rx="6.5" ry="6" fill="var(--blush)" stroke-width="4"/>
+        <circle class="ear-dot" cx="166" cy="34" r="6" fill="var(--blush)" stroke="none"/>
+      </g>
+    </svg>
+  </div>
   <div class="err" id="err"></div>
 </main>
 
 <div class="dock"><div class="inner">
   <div id="status"></div>
   <div class="row">
-    <button class="big me" id="btnMe" type="button">🦭 내가 말하기</button>
+    <button class="big me" id="btnMe" type="button">🐻 내가 말하기</button>
     <button class="big you" id="btnYou" type="button">상대 말하기</button>
   </div>
 </div></div>
@@ -96,36 +149,48 @@ const $ = id => document.getElementById(id);
 const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
                 set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 
-// 설정 복원
+// 설정
 const sel = $('partner');
 Object.entries(LANGS).filter(([k]) => k !== ME).forEach(([k, l]) => sel.add(new Option(l.name, k)));
 sel.value = store.get('semitalk_partner', 'ja');
 $('pass').value = store.get('semitalk_pass', '');
 let formality = store.get('semitalk_formality', 'more');
+let gender = store.get('semitalk_gender', 'f');
 const pitch = $('pitch'); pitch.value = store.get('semitalk_pitch', '1.1'); $('pitchV').textContent = pitch.value;
-function paintFormality() { [...$('formality').children].forEach(b => b.classList.toggle('on', b.dataset.v === formality)); }
-paintFormality();
+function paintSeg(id, v) { [...$(id).children].forEach(b => b.classList.toggle('on', b.dataset.v === v)); }
+function paintGender() {
+  paintSeg('gender', gender);
+  $('hairF').style.display = gender === 'f' ? '' : 'none';
+  $('hairM').style.display = gender === 'm' ? '' : 'none';
+  $('shirt').setAttribute('fill', gender === 'f' ? 'var(--shirt-f)' : 'var(--shirt-m)');
+}
+paintSeg('formality', formality); paintGender();
 if (!$('pass').value) $('setup').open = true;
 sel.onchange = () => { store.set('semitalk_partner', sel.value); updateLabels(); };
 $('pass').onchange = () => store.set('semitalk_pass', $('pass').value);
-$('formality').onclick = e => { if (e.target.dataset.v) { formality = e.target.dataset.v; store.set('semitalk_formality', formality); paintFormality(); } };
+$('formality').onclick = e => { const v = e.target.dataset.v; if (v) { formality = v; store.set('semitalk_formality', v); paintSeg('formality', v); } };
+$('gender').onclick = e => { const v = e.target.dataset.v; if (v) { gender = v; store.set('semitalk_gender', v); paintGender(); } };
 pitch.oninput = () => { $('pitchV').textContent = pitch.value; store.set('semitalk_pitch', pitch.value); };
 function updateLabels() { $('btnYou').textContent = '상대 말하기 (' + LANGS[sel.value].name + ')'; }
 updateLabels();
 
-// 목소리
+// 캐릭터 상태: idle / listening / talking
+function setState(who, s) {
+  const el = who === 'me' ? $('stageMe') : $('stageYou');
+  el.classList.remove('listening', 'talking'); if (s !== 'idle') el.classList.add(s);
+}
+
+// 목소리 (안드로이드 크롬: cancel 직후 바로 speak 하면 끊겨서 0.3초 띄움)
 const tts = window.speechSynthesis;
 let voices = [];
 function loadVoices() { if (tts) voices = tts.getVoices(); }
 if (tts) { loadVoices(); tts.onvoiceschanged = loadVoices; }
-// 안드로이드 크롬: cancel 직후 바로 speak 하면 새 문장까지 끊기는(interrupted) 문제가 있어 0.3초 띄움
 let ttsUnlocked = false;
 function unlockTTS() {
   if (!tts || ttsUnlocked) return;
-  const u = new SpeechSynthesisUtterance(' '); u.volume = 0;
-  tts.speak(u); ttsUnlocked = true;
+  const u = new SpeechSynthesisUtterance(' '); u.volume = 0; tts.speak(u); ttsUnlocked = true;
 }
-function speak(text, lang) {
+function speak(text, lang, who) {
   if (!tts) return;
   const go = () => {
     tts.resume();
@@ -134,7 +199,9 @@ function speak(text, lang) {
     const v = voices.find(x => x.lang.toLowerCase().replace('_', '-').startsWith(LANGS[lang].tts));
     if (v) u.voice = v;
     u.pitch = Number(pitch.value);
-    u.onerror = e => { if (e.error !== 'interrupted' && e.error !== 'canceled') $('err').textContent = '읽기 오류: ' + e.error; };
+    u.onstart = () => setState(who, 'talking');
+    u.onend = () => setState(who, 'idle');
+    u.onerror = e => { setState(who, 'idle'); if (e.error !== 'interrupted' && e.error !== 'canceled') $('err').textContent = '읽기 오류: ' + e.error; };
     tts.speak(u);
   };
   if (tts.speaking || tts.pending) { tts.cancel(); setTimeout(go, 300); } else go();
@@ -160,20 +227,22 @@ async function translate(text, from, to) {
   return data.text;
 }
 
-// 기록
-function addBubble(who, orig, tr, lang) {
-  const log = $('log');
-  const empty = log.querySelector('.empty'); if (empty) empty.remove();
-  const b = document.createElement('div'); b.className = 'bubble ' + who;
-  const o = document.createElement('div'); o.className = 'orig'; o.textContent = orig;
-  const t = document.createElement('div'); t.className = 'tr'; t.textContent = tr;
-  const again = document.createElement('button'); again.type = 'button'; again.textContent = '🔊 다시 듣기';
-  again.onclick = () => { unlockTTS(); speak(tr, lang); };
-  b.append(o, t, again); log.append(b);
-  b.scrollIntoView({ behavior: 'smooth', block: 'end' });
+// 말풍선과 기록
+function showSay(who, orig, tr) {
+  const box = who === 'me' ? $('sayMe') : $('sayYou');
+  box.classList.remove('empty'); box.textContent = tr;
+  const s = document.createElement('small'); s.textContent = orig; box.prepend(s);
+}
+function addLog(who, orig, tr, lang) {
+  const line = document.createElement('div'); line.className = 'line ' + who;
+  line.textContent = orig + ' → ' + tr;
+  const again = document.createElement('button'); again.type = 'button'; again.textContent = '🔊';
+  again.setAttribute('aria-label', '다시 듣기');
+  again.onclick = () => { unlockTTS(); speak(tr, lang, who); };
+  line.append(again); $('log').append(line); $('log').scrollTop = $('log').scrollHeight;
 }
 
-// 듣기 → 번역 → 읽기
+// 듣기 → 번역 → 말하기
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
 function run(who) {
@@ -185,7 +254,8 @@ function run(who) {
   const to = who === 'me' ? sel.value : ME;
   const btn = who === 'me' ? $('btnMe') : $('btnYou');
   rec = new SR(); rec.lang = LANGS[from].sr; rec.interimResults = true;
-  btn.classList.add('on'); $('status').textContent = LANGS[from].name + ' 듣는 중… (다시 누르면 멈춤)';
+  btn.classList.add('on'); setState(who, 'listening');
+  $('status').textContent = LANGS[from].name + ' 듣는 중… (다시 누르면 멈춤)';
   let finalText = '';
   rec.onresult = e => {
     let t = ''; for (const r of e.results) t += r[0].transcript;
@@ -194,14 +264,14 @@ function run(who) {
   };
   rec.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') $('err').textContent = '인식 오류: ' + e.error; };
   rec.onend = async () => {
-    btn.classList.remove('on'); rec = null;
+    btn.classList.remove('on'); rec = null; setState(who, 'idle');
     if (!finalText.trim()) { $('status').textContent = '말소리를 못 들었어요.'; return; }
     $('status').textContent = '번역 중…';
     try {
       const tr = await translate(finalText, from, to);
-      addBubble(who, finalText, tr, to);
+      showSay(who, finalText, tr); addLog(who, finalText, tr, to);
       $('status').textContent = '';
-      speak(tr, to);
+      speak(tr, to, who);
     } catch (err) { $('status').textContent = ''; $('err').textContent = err.message; }
   };
   rec.start();
