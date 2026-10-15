@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SEMI-Talk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+/* 레이아웃: 폰 세로 한 화면, 설정 → 대화 기록 → 아래 큰 버튼 두 개 */
+:root {
+  --bg: #eef4f7; --card: #ffffff; --fg: #23323a; --muted: #6a7d86;
+  --me: #3d8fb5; --me-soft: #d6eaf3; --you: #c4728a; --you-soft: #f6e1e7; --bad: #c2453d; --line: #d7e2e7;
+  --display: "Jua", "Gowun Dodum", system-ui, sans-serif;
+  --body: "Gowun Dodum", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #142027; --card: #1c2b33; --fg: #e3edf1; --muted: #93a8b1; --me: #6fb8da; --me-soft: #23404e;
+  --you: #e29bb0; --you-soft: #48293a; --bad: #ec7d74; --line: #2c3f48; color-scheme: dark } }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5; margin: 0;
+  padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px));
+  padding-block: 16px calc(150px + env(safe-area-inset-bottom, 0px)); }
+main { max-width: 520px; margin: 0 auto; display: grid; gap: 12px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 1.6rem; margin: 0; }
+h1 span { color: var(--me); }
+section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
+label { font-size: .9rem; color: var(--muted); display: grid; gap: 4px; }
+input, select { font-family: var(--body); font-size: 1rem; padding: 9px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.seg button { flex: 1; border: 0; padding: 9px; font-family: var(--body); font-size: .95rem; background: var(--bg); color: var(--muted); }
+.seg button.on { background: var(--me); color: var(--card); }
+#log { display: grid; gap: 10px; }
+.bubble { padding: 10px 12px; border-radius: 12px; max-width: 88%; word-break: break-word; }
+.bubble.me { background: var(--me-soft); justify-self: end; }
+.bubble.you { background: var(--you-soft); justify-self: start; }
+.bubble .orig { font-size: .85rem; color: var(--muted); }
+.bubble .tr { font-size: 1.1rem; margin-top: 2px; }
+.bubble button { margin-top: 4px; border: 0; background: none; color: var(--muted); font-size: .85rem; padding: 0; }
+.empty { color: var(--muted); text-align: center; padding: 18px 0; }
+.err { color: var(--bad); font-size: .9rem; min-height: 1.2em; text-align: center; }
+.dock { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
+  padding: 12px max(14px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); }
+.dock .inner { max-width: 520px; margin: 0 auto; display: grid; gap: 6px; }
+.big { font-family: var(--display); font-size: 1.15rem; padding: 16px 8px; border-radius: 14px; border: 2px solid; }
+.big.me { border-color: var(--me); background: var(--me-soft); color: var(--fg); }
+.big.you { border-color: var(--you); background: var(--you-soft); color: var(--fg); }
+.big.on { filter: brightness(.9); outline: 3px solid var(--fg); }
+#status { text-align: center; font-size: .9rem; color: var(--muted); min-height: 1.3em; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--me); outline-offset: 2px; }
+details summary { cursor: pointer; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>SEMI-Talk <span>🦭</span></h1>
+
+  <section>
+    <details id="setup">
+      <summary>⚙ 설정</summary>
+      <div style="display:grid;gap:10px;margin-top:10px">
+        <label>SEMI-Talk 비밀번호 (이 폰에만 저장돼요)<input id="pass" type="password" autocomplete="off"></label>
+        <label>상대 언어<select id="partner"></select></label>
+        <div><label>상대에게 하는 말투</label>
+          <div class="seg" id="formality"><button type="button" data-v="more" class="on">존댓말</button><button type="button" data-v="less">반말</button></div>
+        </div>
+        <label>목소리 높이 <span id="pitchV">1.1</span><input id="pitch" type="range" min="0.6" max="1.8" step="0.1" value="1.1"></label>
+      </div>
+    </details>
+  </section>
+
+  <section>
+    <div id="log"><div class="empty">아래 버튼을 누르고 말해보세요.</div></div>
+  </section>
+  <div class="err" id="err"></div>
+</main>
+
+<div class="dock"><div class="inner">
+  <div id="status"></div>
+  <div class="row">
+    <button class="big me" id="btnMe" type="button">🦭 내가 말하기</button>
+    <button class="big you" id="btnYou" type="button">상대 말하기</button>
+  </div>
+</div></div>
+
+<script>
+// 언어 목록: 나중에 언어를 늘릴 땐 여기에 한 줄 추가
+const RELAY = 'https://semi-talk-relay.grepwin.workers.dev/';
+const LANGS = {
+  ko: { name: '한국어', sr: 'ko-KR', tts: 'ko', src: 'KO', tgt: 'KO' },
+  ja: { name: '일본어', sr: 'ja-JP', tts: 'ja', src: 'JA', tgt: 'JA' },
+  en: { name: '영어',   sr: 'en-US', tts: 'en', src: 'EN', tgt: 'EN-US' },
+  es: { name: '스페인어', sr: 'es-ES', tts: 'es', src: 'ES', tgt: 'ES' }
+};
+const ME = 'ko';
+const $ = id => document.getElementById(id);
+const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+                set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+// 설정 복원
+const sel = $('partner');
+Object.entries(LANGS).filter(([k]) => k !== ME).forEach(([k, l]) => sel.add(new Option(l.name, k)));
+sel.value = store.get('semitalk_partner', 'ja');
+$('pass').value = store.get('semitalk_pass', '');
+let formality = store.get('semitalk_formality', 'more');
+const pitch = $('pitch'); pitch.value = store.get('semitalk_pitch', '1.1'); $('pitchV').textContent = pitch.value;
+function paintFormality() { [...$('formality').children].forEach(b => b.classList.toggle('on', b.dataset.v === formality)); }
+paintFormality();
+if (!$('pass').value) $('setup').open = true;
+sel.onchange = () => { store.set('semitalk_partner', sel.value); updateLabels(); };
+$('pass').onchange = () => store.set('semitalk_pass', $('pass').value);
+$('formality').onclick = e => { if (e.target.dataset.v) { formality = e.target.dataset.v; store.set('semitalk_formality', formality); paintFormality(); } };
+pitch.oninput = () => { $('pitchV').textContent = pitch.value; store.set('semitalk_pitch', pitch.value); };
+function updateLabels() { $('btnYou').textContent = '상대 말하기 (' + LANGS[sel.value].name + ')'; }
+updateLabels();
+
+// 목소리
+const tts = window.speechSynthesis;
+let voices = [];
+function loadVoices() { if (tts) voices = tts.getVoices(); }
+if (tts) { loadVoices(); tts.onvoiceschanged = loadVoices; }
+// 안드로이드 크롬: cancel 직후 바로 speak 하면 새 문장까지 끊기는(interrupted) 문제가 있어 0.3초 띄움
+let ttsUnlocked = false;
+function unlockTTS() {
+  if (!tts || ttsUnlocked) return;
+  const u = new SpeechSynthesisUtterance(' '); u.volume = 0;
+  tts.speak(u); ttsUnlocked = true;
+}
+function speak(text, lang) {
+  if (!tts) return;
+  const go = () => {
+    tts.resume();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = LANGS[lang].sr;
+    const v = voices.find(x => x.lang.toLowerCase().replace('_', '-').startsWith(LANGS[lang].tts));
+    if (v) u.voice = v;
+    u.pitch = Number(pitch.value);
+    u.onerror = e => { if (e.error !== 'interrupted' && e.error !== 'canceled') $('err').textContent = '읽기 오류: ' + e.error; };
+    tts.speak(u);
+  };
+  if (tts.speaking || tts.pending) { tts.cancel(); setTimeout(go, 300); } else go();
+}
+
+// 번역
+const ERR = {
+  wrong_password: '비밀번호가 틀렸어요. ⚙ 설정에서 다시 넣어주세요.',
+  origin_not_allowed: '이 주소에서는 번역을 쓸 수 없어요.',
+  quota_used_up: 'DeepL 무료 크레딧을 다 썼어요.',
+  deepl_key_rejected: '중계소의 DeepL 키가 거절됐어요. 키를 확인해 주세요.',
+  relay_not_configured: '중계소에 비밀 값이 아직 없어요.',
+  text_too_long: '문장이 너무 길어요. 나눠서 말해주세요.'
+};
+async function translate(text, from, to) {
+  const res = await fetch(RELAY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-SEMI-Pass': $('pass').value },
+    body: JSON.stringify({ text, source: LANGS[from].src, target: LANGS[to].tgt, formality: from === ME ? formality : undefined })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(ERR[data.error] || ('번역 실패: ' + (data.error || res.status)));
+  return data.text;
+}
+
+// 기록
+function addBubble(who, orig, tr, lang) {
+  const log = $('log');
+  const empty = log.querySelector('.empty'); if (empty) empty.remove();
+  const b = document.createElement('div'); b.className = 'bubble ' + who;
+  const o = document.createElement('div'); o.className = 'orig'; o.textContent = orig;
+  const t = document.createElement('div'); t.className = 'tr'; t.textContent = tr;
+  const again = document.createElement('button'); again.type = 'button'; again.textContent = '🔊 다시 듣기';
+  again.onclick = () => { unlockTTS(); speak(tr, lang); };
+  b.append(o, t, again); log.append(b);
+  b.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+// 듣기 → 번역 → 읽기
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+function run(who) {
+  $('err').textContent = '';
+  if (!SR) { $('err').textContent = '이 브라우저는 음성 인식을 지원하지 않아요. 크롬으로 열어주세요.'; return; }
+  if (!$('pass').value) { $('setup').open = true; $('err').textContent = '먼저 ⚙ 설정에 비밀번호를 넣어주세요.'; return; }
+  if (rec) { rec.stop(); return; }
+  const from = who === 'me' ? ME : sel.value;
+  const to = who === 'me' ? sel.value : ME;
+  const btn = who === 'me' ? $('btnMe') : $('btnYou');
+  rec = new SR(); rec.lang = LANGS[from].sr; rec.interimResults = true;
+  btn.classList.add('on'); $('status').textContent = LANGS[from].name + ' 듣는 중… (다시 누르면 멈춤)';
+  let finalText = '';
+  rec.onresult = e => {
+    let t = ''; for (const r of e.results) t += r[0].transcript;
+    $('status').textContent = '“' + t + '”';
+    if (e.results[e.results.length - 1].isFinal) finalText = t;
+  };
+  rec.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') $('err').textContent = '인식 오류: ' + e.error; };
+  rec.onend = async () => {
+    btn.classList.remove('on'); rec = null;
+    if (!finalText.trim()) { $('status').textContent = '말소리를 못 들었어요.'; return; }
+    $('status').textContent = '번역 중…';
+    try {
+      const tr = await translate(finalText, from, to);
+      addBubble(who, finalText, tr, to);
+      $('status').textContent = '';
+      speak(tr, to);
+    } catch (err) { $('status').textContent = ''; $('err').textContent = err.message; }
+  };
+  rec.start();
+}
+$('btnMe').onclick = () => { unlockTTS(); run('me'); };
+$('btnYou').onclick = () => { unlockTTS(); run('you'); };
+</script>
+</body>
+</html>
