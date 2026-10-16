@@ -5,8 +5,9 @@
 //   APP_PASS  : SEMI-Talk 전용 비밀번호
 
 const ALLOWED_ORIGIN = 'https://starseeker-harpseal.github.io';
-const TARGETS = ['KO', 'JA', 'EN-US', 'EN-GB', 'ES'];
-const SOURCES = ['KO', 'JA', 'EN', 'ES'];
+// 언어 코드 모양만 검사 (예: JA, EN-US, ZH-HANS) — 언어를 늘려도 이 파일은 안 고쳐도 됨
+const TARGET_RE = /^[A-Z]{2}(-[A-Z]{2,4})?$/;
+const SOURCE_RE = /^[A-Z]{2}$/;
 const MAX_CHARS = 1000;
 
 function corsHeaders(origin) {
@@ -46,8 +47,8 @@ export default {
     const source = body.source ? String(body.source).toUpperCase() : '';
     if (!text) return reply(400, { error: 'empty_text' }, origin);
     if (text.length > MAX_CHARS) return reply(400, { error: 'text_too_long' }, origin);
-    if (!TARGETS.includes(target)) return reply(400, { error: 'bad_target' }, origin);
-    if (source && !SOURCES.includes(source)) return reply(400, { error: 'bad_source' }, origin);
+    if (!TARGET_RE.test(target)) return reply(400, { error: 'bad_target' }, origin);
+    if (source && !SOURCE_RE.test(source)) return reply(400, { error: 'bad_source' }, origin);
 
     const payload = { text: [text], target_lang: target };
     if (source) payload.source_lang = source;

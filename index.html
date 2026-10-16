@@ -140,10 +140,17 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 // 언어 목록: 나중에 언어를 늘릴 땐 여기에 한 줄 추가
 const RELAY = 'https://semi-talk-relay.grepwin.workers.dev/';
 const LANGS = {
-  ko: { name: '한국어', sr: 'ko-KR', tts: 'ko', src: 'KO', tgt: 'KO' },
-  ja: { name: '일본어', sr: 'ja-JP', tts: 'ja', src: 'JA', tgt: 'JA' },
-  en: { name: '영어',   sr: 'en-US', tts: 'en', src: 'EN', tgt: 'EN-US' },
-  es: { name: '스페인어', sr: 'es-ES', tts: 'es', src: 'ES', tgt: 'ES' }
+  ko: { name: '🇰🇷 한국어',     sr: 'ko-KR', tts: ['ko'],       src: 'KO', tgt: 'KO' },
+  ja: { name: '🇯🇵 일본어',     sr: 'ja-JP', tts: ['ja'],       src: 'JA', tgt: 'JA' },
+  en: { name: '🇺🇸 영어',       sr: 'en-US', tts: ['en'],       src: 'EN', tgt: 'EN-US' },
+  zh: { name: '🇨🇳 중국어',     sr: 'zh-CN', tts: ['zh', 'cmn'], src: 'ZH', tgt: 'ZH-HANS' },
+  es: { name: '🇪🇸 스페인어',   sr: 'es-ES', tts: ['es'],       src: 'ES', tgt: 'ES' },
+  fr: { name: '🇫🇷 프랑스어',   sr: 'fr-FR', tts: ['fr'],       src: 'FR', tgt: 'FR' },
+  de: { name: '🇩🇪 독일어',     sr: 'de-DE', tts: ['de'],       src: 'DE', tgt: 'DE' },
+  vi: { name: '🇻🇳 베트남어',   sr: 'vi-VN', tts: ['vi'],       src: 'VI', tgt: 'VI' },
+  th: { name: '🇹🇭 태국어',     sr: 'th-TH', tts: ['th'],       src: 'TH', tgt: 'TH' },
+  ru: { name: '🇷🇺 러시아어',   sr: 'ru-RU', tts: ['ru'],       src: 'RU', tgt: 'RU' },
+  id: { name: '🇮🇩 인도네시아어', sr: 'id-ID', tts: ['id', 'in'], src: 'ID', tgt: 'ID' }
 };
 const ME = 'ko';
 const $ = id => document.getElementById(id);
@@ -206,7 +213,7 @@ function speak(text, lang, who) {
     tts.resume();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = LANGS[lang].sr;
-    const v = voices.find(x => x.lang.toLowerCase().replace('_', '-').startsWith(LANGS[lang].tts));
+    const v = voices.find(x => LANGS[lang].tts.some(t => x.lang.toLowerCase().replace('_', '-').startsWith(t)));
     if (v) u.voice = v;
     u.pitch = Number(who === 'me' ? pitchMe.value : pitchYou.value);
     u.onstart = () => setState(who, 'talking');
